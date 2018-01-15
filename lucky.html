@@ -28,6 +28,9 @@
   <script>function dice(){
     return Math.floor(Math.random()*6)+1;
 }
+function d(max){
+    return Math.floor(Math.random()*max)+1;
+}
 
 function callculateOdds() {
     shots = document.getElementById("shots").value;
@@ -67,7 +70,19 @@ function callculateOdds() {
     if (doom) testW=testRR;
     if (save1rr) testS=testRR1;
 
-    document.querySelector('#test').innerHTML += simulP(shots,1000,wounds,fnp,models, function(){ return shootRR(hit,wound,save,ap,dmg,testH,testW,testS);});
+    var droll = /d\d+/i.exec(dmg);
+    console.log(droll); 
+    if (droll)
+    {
+       var num = /\d+/i.exec(droll[0]);
+       dmgF = function(){ return d(Number(num[0]));};
+    }
+    else
+    {
+       dmgF =function(){ return dmg;};
+    }
+
+    document.querySelector('#test').innerHTML += simulP(shots,1000,wounds,fnp,models, function(){ return shootRR(hit,wound,save,ap,dmgF,testH,testW,testS);});
     return false;
 }
 var results;
@@ -93,32 +108,13 @@ function testRR(succeed)
     return + (roll >= succeed); 
 }
 
-function shoot(hit, wound, save, ap,dmg,reroll,doom)
-{
-    if (test(hit) || (reroll && test(hit))) 
-    if (test(wound) || (doom && test(wound))) 
-    if (! test(Number(save)+Number(ap)))
-        return dmg;
-
-    return 0;
-}
 
 function shootRR(hit, wound, save, ap,dmg,testH,testW,testS)
 {
     if (testH(hit)) 
     if (testW(wound)) 
     if (! testS(Number(save)+Number(ap)))
-        return dmg;
-
-    return 0;
-}
-
-function shoot(hit, wound, save, ap,dmg,reroll,doom)
-{
-    if (test(hit) || (reroll && test(hit))) 
-    if (test(wound) || (doom && test(wound))) 
-    if (! test(Number(save)+Number(ap)))
-        return dmg;
+        return dmg();
 
     return 0;
 }
