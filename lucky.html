@@ -1,0 +1,159 @@
+<!DOCTYPE html><html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width" />
+  <title>40k Lucky</title>
+</head>
+<body>
+
+ <form id="f1" name="f1" method="post" action="" onSubmit="return callculateOdds()" >
+  Shots: <input type="text" id="shots" name="shots" value="10" ><br>
+  To Hit: <input type="text" id="hit" name="hit" value="3" ><br>
+  To Wound: <input type="text" id="wound" value="3"><br>
+  Save: <input type="text" id="save" value="3"><br>
+  AP: <input type="text" id="ap" value="2"><br>
+  Damage: <input type="text" id="dmg" value="3"><br>
+  FnP: <input type="text" id="fnp" value="7"><br>
+  Models in unit: <input type="text" id="models" value="1"><br>
+  Wounds per model: <input type="text" id="wounds" value="10"><br>
+  Reroll all hits: <input type="checkbox" id="guide"><br>
+  Reroll 1's to hit: <input type="checkbox" id="guide1"><br>
+  Reroll to wound: <input type="checkbox" id="doom"><br>
+  Reroll 1's to wound: <input type="checkbox" id="doom1"><br>
+  Reroll 1's to save: <input type="checkbox" id="save1rr"><br>
+  <input type="submit" value="Check">
+</form>
+  <div id="test">
+</div>
+  <script>function dice(){
+    return Math.floor(Math.random()*6)+1;
+}
+
+function callculateOdds() {
+    shots = document.getElementById("shots").value;
+    hit = document.getElementById("hit").value;
+    wound = document.getElementById("wound").value;
+    save = document.getElementById("save").value;
+    ap = document.getElementById("ap").value;
+    dmg = document.getElementById("dmg").value;
+    wounds = document.getElementById("wounds").value;
+    models = document.getElementById("models").value;
+    fnp = document.getElementById("fnp").value;
+    guide= document.getElementById("guide").checked;
+    guide1= document.getElementById("guide1").checked;
+    doom= document.getElementById("doom").checked;
+    doom1= document.getElementById("doom1").checked;
+    save1rr= document.getElementById("save1rr").checked;
+    document.querySelector('#test').innerHTML += '<br/>' + shots + " x ";
+    document.querySelector('#test').innerHTML += 'Hit on: ' + hit;
+    document.querySelector('#test').innerHTML += ' wound on: ' + wound;
+    document.querySelector('#test').innerHTML += ' Save: ' + save;
+    document.querySelector('#test').innerHTML += ' AP: ' + ap;
+    document.querySelector('#test').innerHTML += ' D: ' + dmg;
+    document.querySelector('#test').innerHTML += ' Models: ' + models;
+    document.querySelector('#test').innerHTML += ' Wounds: ' + wounds;
+    document.querySelector('#test').innerHTML += ' FnP: ' + fnp;
+    document.querySelector('#test').innerHTML += ' Reroll hit: ' + guide;
+    document.querySelector('#test').innerHTML += ' Reroll 1\'s to hit: ' + guide1;
+    document.querySelector('#test').innerHTML += ' Reroll wounds: ' + doom;
+    document.querySelector('#test').innerHTML += ' Reroll 1\'s to wound: ' + doom1;
+    document.querySelector('#test').innerHTML += ' Reroll 1\'s on save: ' + save1rr;
+    var testH=test;
+    var testW=test;
+    var testS=test;
+    if (guide1) testH=testRR1;
+    if (guide) testH=testRR;
+    if (doom1) testW=testRR1;
+    if (doom) testW=testRR;
+    if (save1rr) testS=testRR1;
+
+    document.querySelector('#test').innerHTML += simulP(shots,1000,wounds,fnp,models, function(){ return shootRR(hit,wound,save,ap,dmg,testH,testW,testS);});
+    return false;
+}
+var results;
+
+function test(succeed)
+{
+    return + (dice() >= succeed); 
+}
+
+function testRR1(succeed)
+{
+    var roll = dice();
+    if (roll == 1)
+        roll = dice();
+    return + (roll >= succeed); 
+}
+
+function testRR(succeed)
+{
+    var roll = dice();
+    if (roll < succeed)
+        roll = dice();
+    return + (roll >= succeed); 
+}
+
+function shoot(hit, wound, save, ap,dmg,reroll,doom)
+{
+    if (test(hit) || (reroll && test(hit))) 
+    if (test(wound) || (doom && test(wound))) 
+    if (! test(Number(save)+Number(ap)))
+        return dmg;
+
+    return 0;
+}
+
+function shootRR(hit, wound, save, ap,dmg,testH,testW,testS)
+{
+    if (testH(hit)) 
+    if (testW(wound)) 
+    if (! testS(Number(save)+Number(ap)))
+        return dmg;
+
+    return 0;
+}
+
+function shoot(hit, wound, save, ap,dmg,reroll,doom)
+{
+    if (test(hit) || (reroll && test(hit))) 
+    if (test(wound) || (doom && test(wound))) 
+    if (! test(Number(save)+Number(ap)))
+        return dmg;
+
+    return 0;
+}
+
+function simulP(shots,iter,wounds,fnp,models, func)
+{
+    var results=[]
+    var total=0;
+    var totalM=0;
+    var succ=0;
+    for (i=0;i<iter;i++)
+    {
+        var sum=0;
+        var unit = models;
+        var curr_model = wounds;
+        for(j=0;j<shots;j++)
+        {
+            var res=Number(func());
+            
+            if (fnp <= 6 && fnp > 0) for(k=res;k>0;k--)
+            {
+                if (test(fnp)) res--;
+            }
+
+            sum += res; 
+            curr_model -= res;
+            if (curr_model < 1){ curr_model = wounds; unit--; }
+        }
+        
+        total += sum;
+        totalM += models - unit;
+        if(unit < 1){succ++;}
+    }
+ return " Chance: "  + succ/iter + " Avg W: " + total/iter + " Avg Models: " + totalM/iter;
+}
+</script>
+</body>
+</html>
